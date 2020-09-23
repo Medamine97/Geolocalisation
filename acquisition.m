@@ -31,4 +31,19 @@ xlabel('Echantillon')
 ylabel('Signal d''antenne')
 title('Signal brut en sortie d''antenne, échantillonné à 16.368 MHz')
 
+fs = -2660; %frequence du satellite 10 
+t=0:1/fe:1e-3-1/fe;
+porteusec=cos(2*pi*fs*t);
+porteuse=sin(2*pi*fs*t);
+I=data.*porteusec.' ; 
+Q=data.*porteuse.' ;
+X=fft(I+1i*Q);
+Y= conj(fft(sca));
+r2=(ifft(X.*Y.')).^2;
+figure
+plot(abs(r2))
+
+
+
+
 fclose(fid); % fermeture du fichier
