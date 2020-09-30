@@ -5,7 +5,7 @@ clc
 fe=16.368e6; % fréquence d'échantillonnage
 fi=2.046e6; % fréquence intermédiaire
 Tc=1e-3; % période du code C/A
-nbr_ech=fe*Tc; % nombre d'échantillons par période de code
+nbr_ech=fe*Tc; % nombre d'échantillons par période de code(cad sur une millisec)
 
 prn=10; % numéro PRN du satellite à étudier
 
@@ -47,9 +47,36 @@ for deltaf=ftest  %for Q3
     R=[R r2];
     
 end;
+
+data01=fread(fid,nbr_ech,'ubit1','l'); % lecture du signal sur 1 période de code
+data=2*data01-1; % conversion de binaire en -1 / 1
+
+R2=[];
+ftest=-5000:100:5000;
+for deltaf=ftest  %for Q3
+    %deltaf = -2660; %frequence Dopler du satellite 10 Q2
+    fs=fi+deltaf;
+    t=0:1/fe:1e-3-1/fe;
+    porteusec=cos(2*pi*fs*t);
+    porteuse=sin(2*pi*fs*t);
+    I=data.*porteusec.' ; 
+    Q=data.*porteuse.' ;
+    X=fft(I+1i*Q);
+    Y= conj(fft(sca));
+    r2=(ifft(X.*Y.')).^2;
+    R2=[R2 r2];
+    
+end;
+
+
+
+
+
 figure
 %plot(abs(r2))
 mesh(ftest,t,abs(R))
+mesh(ftest,t,abs(R))
+
 
 
 
