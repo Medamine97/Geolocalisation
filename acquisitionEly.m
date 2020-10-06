@@ -6,51 +6,43 @@ fe=16.368e6; % fréquence d'échantillonnage
 fi=2.046e6; % fréquence intermédiaire
 Tc=1e-3; % période du code C/A
 nbr_ech=fe*Tc; % nombre d'échantillons par période de code(cad sur une millisec)
-%N=K=1 1 ms de signal
 K=1;N=1;
-% prn=10; % numéro PRN du satellite à étudier
-%pour tout les satellites : prn =1:32
-Nbrsat=32 ;
-ftest=-5000:100:5000;
-t=0:1/fe:N*1e-3-1/fe;
-% Nbrsat=1;
+%prn=10; % numéro PRN du satellite à étudier
 listeprn=[];
 listecode=[];
 listedoppler=[];
-
-for prn=1:Nbrsat
-
+for prn=1:32
     ca = 2*gcacode(prn)-1; % code C/A du satellite à étudier
     sca = sampleca(ca,fe); % code rééchantillonné à la fréquence fe
     scaNms=[];
     for i=1:N
         scaNms=[scaNms sca];
-     end;
-     
-    Rsum=zeros(length(t), length(ftest));
+    end;
 
-%     figure
-%     plot(sca)
-%     axis([0 length(sca) -1.2 1.2])
-%     xlabel('Echantillon')
-%     ylabel('Code C/A')
-%     title('Code C/A de PRN 10, échantillonné à 16.368 MHz')
-%     title('Code C/A de PRN  échantillonné à 16.368 MHz')
-%     end;
+    %figure
+    %plot(sca)
+    %axis([0 length(sca) -1.2 1.2])
+    %xlabel('Echantillon')
+    %ylabel('Code C/A')
+    %title('Code C/A de PRN 10, échantillonné à 16.368 MHz')
+
     fid = fopen('rec.bin.091','r','l'); % ouverture du fichier en lecture, format little-endian
 
     data01=fread(fid,nbr_ech,'ubit1','l'); % lecture du signal sur 1 période de code
     data=2*data01-1; % conversion de binaire en -1 / 1
 
-%     figure
-%     plot(data)
-%     axis([0 length(data) -1.2 1.2])
-%     xlabel('Echantillon')
-%     ylabel('Signal d''antenne')
-%     title('Signal brut en sortie d''antenne, échantillonné à 16.368 MHz')
+    %figure
+    %plot(data)
+    %axis([0 length(data) -1.2 1.2])
+    %xlabel('Echantillon')
+    %ylabel('Signal d''antenne')
+    %title('Signal brut en sortie d''antenne, échantillonné à 16.368 MHz')
     %Acquisitionpar FFT
 
 
+    ftest=-5000:100:5000;
+     t=0:1/fe:N*1e-3-1/fe;
+    Rsum=zeros(length(t), length(ftest));
     for k=1:K
         data01=fread(fid,nbr_ech*N,'ubit1','l'); % lecture du signal sur 1 période de code
         data=2*data01-1; % conversion de binaire en -1 / 1
@@ -69,34 +61,32 @@ for prn=1:Nbrsat
             Y= conj(fft(scaNms));
             r2=(ifft(X.*Y.')).^2;
             R=[R r2];
-
-        end;
-        Rsum=Rsum+R;
-%         figure 
-%         mesh(ftest,t(1:nbr_ech),abs(R(1:nbr_ech,:)))
-    end;
-    meancorr = mean(mean(abs(Rsum))); %mean et max 1D
-    maxcorr = max(max(abs(Rsum)));
-    if maxcorr/meancorr >20 
+         end;
+            Rsum=Rsum+R;
+         %   figure;
+          %  mesh(ftest, t(1:nbr_ech),abs(R(1:nbr_ech,:)))
+     end;
+     meancorr = mean(mean(abs(Rsum))); %mean et max 1D
+     maxcorr = max(max(abs(Rsum)));
+     if maxcorr / meancorr>20
         figure
-        mesh(ftest,t(1:nbr_ech),abs(Rsum(1:nbr_ech,:)))
+        mesh(ftest, t(1:nbr_ech),abs(Rsum(1:nbr_ech,:)))
         title(num2str(prn))
-        X=abs(Rsum(1:nbr_ech,:))== abs(max(abs(Rsum(1:nbr_ech,:))));
-        [row,col] =find(X);
+        %X=Rsum(1:nbr_ech,:) == max(max(abs(Rsum)));
+        X=abs(Rsum(1:nbr_ech,:)) == max(max(abs(Rsum(1:nbr_ech,:))));
+        [row, col] = find(X);
         listeprn=[listeprn prn];
         listecode=[listecode row];
-        listedoppler=[listedoppler ftest(col)] ; 
-        pause(0.1)
-    end ;
-%     figure
+        listedoppler=[listedoppler ftest(col)];
+        pause(0.1)    
+     end
     %plot(abs(r2))
-%     mesh(ftest,t,abs(R))
-%     figure
-%     mesh(ftest,t,abs(Rsum))
+    %mesh(ftest,t,abs(R))
+   
+    %mesh(ftest,t,abs(Rsum))
 
 
     fclose(fid); % fermeture du fichier
 end;
-
 clearvars -except listeprn listecode listedoppler
 save result_acq
