@@ -1,0 +1,54 @@
+clear
+close all
+clc
+
+fe=16.368e6; % fréquence d'échantillonnage
+fi=2.046e6; % fréquence intermédiaire
+Tc=1e-3; % période du code C/A
+nbr_ech=fe*Tc; % nombre d'échantillons par période de code (càd sur une milliseconde)
+numsatdansliste=3 ;
+prn=listeprn[numsatdansliste];
+fid = fopen('rec.bin.091','r','l'); % ouverture du fichier en lecture, format little-endian
+fread(fid,listecode(numsatdansliste),'r','l')
+ca = 2*gcacode(prn)-1; % code C/A du satellite à étudier
+sca = sampleca(ca,fe); % code rééchantillonné à la fréquence fe
+d=7;
+
+
+t=0:1/fe:N*1e-3-1/fe; % vecteur temps à fréquence d'échantillonnage fe, sur N millisecondes
+nbrms=4000; % on traite 4 s de signal
+for nums=1:nbrms
+    
+    data01=fread(fid,nbr_ech,'ubit1','l'); % lecture du signal sur N période de code
+    data=2*data01-1; % conversion de binaire en -1 / 1
+    %calculer la corrélation
+    fs=fi+deltaf;
+    porteusec=cos(2*pi*fs*t); % réplique de la porteuse en cos
+    porteuses=sin(2*pi*fs*t); % réplique de la porteuse en sin
+    I=data.*porteusec.'; % démodulation du signal reçu
+    Q=data.*porteuses.';
+    
+   
+    P= sca;
+    E=[sca(d+1:end) sca(1:d)];
+    L=[sca(end-d+1:end) sca(1:end-d)];
+    
+%     figure
+%     subplot 311
+%     plot(P,'o')
+%     subplot 312
+%     plot(E,'o')
+%     subplot 313
+%     plot(L,'o')
+%     
+%     IP=I*P;
+%     IE=I*E;
+%     IL=I*L;
+%     
+%     QP=Q*P;
+%     QE=Q*E;
+%     QL=Q*L;
+    
+    
+    
+    
